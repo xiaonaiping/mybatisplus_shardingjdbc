@@ -1,0 +1,100 @@
+#app
+server:
+    port: 8080
+
+#spring
+spring:
+  devtools:
+    restart:
+      enabled: false
+
+  # H2 DATABASE CONFIG
+#  datasource:
+#    type: com.zaxxer.hikari.HikariDataSource
+#    schema: classpath:/db/schema-h2.sql
+#    data: classpath:/db/data-h2.sql
+#    url: jdbc:h2:mem:testdb
+#    username: sa
+#    password: sa
+#    platform: h2
+#    initialize: true
+#    continue-on-error: true
+#  h2:
+#    console:
+#      enabled: true
+#      path: /console
+#shardingjdbc
+sharding:
+  jdbc:
+      datasource:
+        names: ds_0,ds_1
+        ds_0:
+          type: org.apache.commons.dbcp.BasicDataSource
+          driverClassName: com.mysql.jdbc.Driver
+          url: jdbc:mysql://192.168.150.129:3306/demo_ds_0
+          username: root
+          password: root
+        ds_1:
+          type: org.apache.commons.dbcp.BasicDataSource
+          driverClassName: com.mysql.jdbc.Driver
+          url: jdbc:mysql://192.168.150.129:3308/demo_ds_1?useUnicode=true&characterEncoding=UTF-8
+          username: root
+          password: root
+      config:
+        sharding:
+          defaultDataSourceName: ds_1
+          default-database-strategy:
+            inline:
+              sharding-column: user_id
+              algorithm-expression: ds_${(user_id % 2)+0}
+          tables:
+            t_order:
+              actualDataNodes: ds_${0..1}.t_order_${0..2}
+              tableStrategy:
+                inline:
+                  shardingColumn: user_id
+                  algorithmExpression: t_order_${user_id % 3}
+              keyGeneratorColumnName: order_id
+            t_order_item:
+              actualDataNodes: ds_${0..1}.t_order_item_${0..1}
+              tableStrategy:
+                inline:
+                  shardingColumn: user_id
+                  algorithmExpression: t_order_item_${user_id % 2}
+              keyGeneratorColumnName: order_item_id
+
+
+#mybatis
+mybatis-plus:
+  datasource: dataSource
+  mapper-locations: classpath:/mapper/*Mapper.xml
+  #实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: com.baomidou.springboot.entity
+  typeEnumsPackage: com.baomidou.springboot.entity.enums
+  global-config:
+    #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+    id-type: 2
+    #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
+    field-strategy: 2
+    #驼峰下划线转换
+    db-column-underline: true
+    #刷新mapper 调试神器
+    refresh-mapper: true
+    #数据库大写下划线转换
+    #capital-mode: true
+    #序列接口实现类配置
+    #key-generator: com.baomidou.springboot.xxx
+    #逻辑删除配置
+    logic-delete-value: 0
+    logic-not-delete-value: 1
+    #自定义填充策略接口实现
+    #meta-object-handler: com.baomidou.springboot.xxx
+    #自定义SQL注入器
+    #sql-injector: com.baomidou.springboot.xxx
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+#logging
+logging:
+  level: warn
+
